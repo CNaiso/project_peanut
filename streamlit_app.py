@@ -1,106 +1,72 @@
-import streamlit as st
-
-st.title("Project Peanut:Cynthia Arami")
-st.write(
-    "This is a web application built using stringlit"
-)
-
-
-
-
-
-# Sample DataFrame to display
 import pandas as pd
+import streamlit as st
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
 
-martket_data = {
-    "Company": ["Apple", "Google", "Microsoft", "Amazon"],
-    "Stock Price": [150, 2800, 300, 3500],
-    "Market Cap (Billion USD)": [2500, 1800, 2200, 1700],
-}
+def load_dataset(url):
+    """Load dataset from a given URL."""
+    return pd.read_csv(url)
 
-df = pd.DataFrame(martket_data)
+def main():
+    st.title("EDA and ML App")
 
-# Display the DataFrame in the Streamlit app
-st.header("Market Data")
-st.subheader("Stock Prices and Market Capitalization")
-st.dataframe(df)
+    # Sidebar navigation
+    st.sidebar.title("Navigation")
+    page = st.sidebar.radio("Go to", ["EDA", "ML Modeling"])
 
-# display data using a table
-st.subheader("Market Data Table")
-st.table(df)
+    if page == "EDA":
+        eda_page()
+    elif page == "ML Modeling":
+        ml_modeling_page()
 
-# Charts
-st.header("Market Data Visualization")
-st.subheader("Stock Prices")
-st.bar_chart(df.set_index("Company")["Stock Price"])
+def eda_page():
+    st.header("Exploratory Data Analysis")
 
-# Markdown in streamlit
-st.header("About Project Peanut")
-st.markdown("""
-## Data Description
+    dataset_url = st.selectbox("Select Dataset", [
+        "https://raw.githubusercontent.com/josephgitau/project_defcone/refs/heads/main/Data/Insurance/cleaned_group_death_claims.csv",
+        "https://raw.githubusercontent.com/josephgitau/project_defcone/refs/heads/main/Data/Insurance/cleaned_individual_death_claims.csv"
+    ])
 
-### Input Files
+    st.write("Loading dataset...")
+    data = load_dataset(dataset_url)
 
-| File | Description | Size | Records |
-|------|-------------|------|---------|
-| `Train.csv` | Historical customer-product-week data | 275 MB | ~5M rows |
-| `Test.csv` | Test set for predictions | 27 MB | ~500K rows |
-| `SampleSubmission.csv` | Submission format | 7 MB | ~500K rows |
+    st.write("Dataset Preview:")
+    st.dataframe(data.head())
+    st.write("Summary Statistics:")
+    st.write(data.describe())
+    st.write("Column Information:")
+    st.write(data.info())
 
-### Key Columns
+def ml_modeling_page():
+    st.header("Machine Learning Modeling")
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `customer_id` | ID | Unique customer identifier |
-| `product_unit_variant_id` | ID | Unique product variant identifier |
-| `week_start` | Date | Week start date |
-| `purchased_this_week` | Binary | Purchase indicator (0/1) |
-| `qty_this_week` | Float | Quantity purchased |
-| `customer_category` | Category | Customer segment |
-| `customer_status` | Category | Customer status |
-| `grade_name` | Category | Product grade |
-| `unit_name` | Category | Product unit type |
+    dataset_url = st.selectbox("Select Dataset", [
+        "https://raw.githubusercontent.com/josephgitau/project_defcone/refs/heads/main/Data/Insurance/cleaned_group_death_claims.csv",
+        "https://raw.githubusercontent.com/josephgitau/project_defcone/refs/heads/main/Data/Insurance/cleaned_individual_death_claims.csv"
+    ])
 
-### Targets
+    st.write("Loading dataset...")
+    data = load_dataset(dataset_url)
 
-| Target | Type | Description |
-|--------|------|-------------|
-| `Target_purchase_next_1w` | Binary | Will purchase in next 1 week? |
-| `Target_purchase_next_2w` | Binary | Will purchase in next 2 weeks? |
-| `Target_qty_next_1w` | Float | Quantity in next 1 week |
-| `Target_qty_next_2w` | Float | Quantity in next 2 weeks |
+    st.write("Dataset Preview:")
+    st.dataframe(data.head())
 
----
-""")
+    features = st.multiselect("Features", data.columns.tolist())
+    target = st.selectbox("Target", data.columns.tolist())
 
+    if features and target:
+        X = data[features]
+        y = data[target]
 
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-## Metrics
-st.header("Key Metrics")
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric("Total Customers", "150,000", "5%")
-with col2:
-    st.metric("Total Products", "2,500", "2%")
-with col3:
-    st.metric("Total Purchases", "1,200,000", "8%")
+        model = RandomForestClassifier()
+        model.fit(X_train, y_train)
 
-# Streamlit Basics
-st.header("Streamlit Basics")
-st.markdown("""
+        y_pred = model.predict(X_test)
+        st.write("Classification Report:")
+        st.text(classification_report(y_test, y_pred))
 
-## Text and Formatting
-- Use `st.write()` for simple text output.
-- Use `st.markdown()` for formatted text and markdown support.
-## Data Display
-- Use `st.dataframe()` to display interactive tables.
-- Use `st.table()` for static tables.
-            
-## Charts and Visualizations
-- Use `st.line_chart()`, `st.bar_chart()`, and `st.area_chart()` for quick visualizations.
-- For more complex charts, use libraries like Matplotlib or Seaborn and display with `st.pyplot()`.
-## Layout and Interactivity
-- Use `st.columns()` to create multi-column layouts.
-- Use `st.expander()` to hide/show content.
-- Use `st.form()` to create interactive forms for user input.
-""")
+if __name__ == "__main__":
+    main()
