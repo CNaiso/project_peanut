@@ -3,6 +3,9 @@ import streamlit as st
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
+from sklearn.utils import check_array
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def load_dataset(url):
     """Load dataset from a given URL."""
@@ -33,10 +36,39 @@ def eda_page():
 
     st.write("Dataset Preview:")
     st.dataframe(data.head())
+
     st.write("Summary Statistics:")
     st.write(data.describe())
+
     st.write("Column Information:")
     st.write(data.info())
+
+    # Visualizations
+    st.subheader("Visualizations")
+
+    # Correlation heatmap
+    st.write("Correlation Heatmap:")
+    fig, ax = plt.subplots()
+    sns.heatmap(data.corr(), annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
+    st.pyplot(fig)
+
+    # Distribution of numerical columns
+    st.write("Distribution of Numerical Columns:")
+    numerical_columns = data.select_dtypes(include=['float64', 'int64']).columns
+    for col in numerical_columns:
+        st.write(f"Distribution of {col}:")
+        fig, ax = plt.subplots()
+        sns.histplot(data[col], kde=True, ax=ax)
+        st.pyplot(fig)
+
+    # Count plots for categorical columns
+    st.write("Count Plots for Categorical Columns:")
+    categorical_columns = data.select_dtypes(include=['object']).columns
+    for col in categorical_columns:
+        st.write(f"Count Plot for {col}:")
+        fig, ax = plt.subplots()
+        sns.countplot(x=data[col], ax=ax)
+        st.pyplot(fig)
 
 def ml_modeling_page():
     st.header("Machine Learning Modeling")
@@ -58,6 +90,10 @@ def ml_modeling_page():
     if features and target:
         X = data[features]
         y = data[target]
+
+        # Ensure X and y are in the correct format
+        X = X.values  # Convert to NumPy array
+        y = y.values.ravel()  # Flatten target array
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
